@@ -16,6 +16,44 @@ const symbols = {
   '/': '÷',
 };
 
+let audioContext;
+
+function getAudioContext() {
+  if (!window.AudioContext && !window.webkitAudioContext) return null;
+  if (!audioContext) {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    audioContext = new Context();
+  }
+  return audioContext;
+}
+
+function playTapSound() {
+  const context = getAudioContext();
+  if (!context) return;
+
+  if (context.state === 'suspended') {
+    context.resume().catch(() => {});
+  }
+
+  const now = context.currentTime;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = 'triangle';
+  oscillator.frequency.setValueAtTime(480, now);
+  oscillator.frequency.exponentialRampToValueAtTime(340, now + 0.045);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.05, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+
+  oscillator.start(now);
+  oscillator.stop(now + 0.065);
+}
+
 function toNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : NaN;
@@ -214,6 +252,8 @@ document.querySelectorAll('.btn').forEach((btn) => {
     const num = btn.dataset.number;
     const action = btn.dataset.action;
 
+    playTapSound();
+
     if (num !== undefined) appendNumber(num);
     if (action) handleAction(action);
 
@@ -223,6 +263,7 @@ document.querySelectorAll('.btn').forEach((btn) => {
 
 window.addEventListener('keydown', (event) => {
   const { key } = event;
+  let handled = true;
 
   if ((key >= '0' && key <= '9') || key === '.') {
     appendNumber(key);
@@ -237,8 +278,13 @@ window.addEventListener('keydown', (event) => {
     handleAction('clear-all');
   } else if (key === '%') {
     handleAction('percent');
+  } else {
+    handled = false;
   }
 
+  if (!handled) return;
+
+  playTapSound();
   updateDisplay();
 });
 
