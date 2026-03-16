@@ -7,10 +7,16 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="space-scene" aria-hidden="true">
+    <div class="nebula nebula--one"></div>
+    <div class="nebula nebula--two"></div>
+    <div class="earth"></div>
+  </div>
+
   <main class="calculator" aria-label="Calculator">
     <header class="calculator__header">
-      <h1>ProCalc</h1>
-      <p>Professional Calculator</p>
+      <h1>AstraCalc</h1>
+      <p>Premium Calculator</p>
     </header>
 
     <section class="display" aria-live="polite">
@@ -39,9 +45,9 @@
       <button class="btn" data-number="3">3</button>
       <button class="btn btn--operator" data-action="+">+</button>
 
-      <button class="btn" data-action="toggle-sign">±</button>
+      <button class="btn btn--subtle" data-action="toggle-sign">±</button>
       <button class="btn" data-number="0">0</button>
-      <button class="btn" data-action="percent">%</button>
+      <button class="btn btn--subtle" data-action="percent">%</button>
       <button class="btn btn--equal" data-action="=">=</button>
 
       <button class="btn btn--wide" data-number=".">.</button>
