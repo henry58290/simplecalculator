@@ -1,73 +1,245 @@
 const display = document.getElementById('display');
-let current = '';
-let previous = '';
-let operator = null;
-let resetNext = false;
+const expressionEl = document.getElementById('expression');
 
-function updateDisplay(){
-  display.textContent = current || previous || '0';
+const state = {
+  current: '0',
+  previous: null,
+  operator: null,
+  shouldResetCurrent: false,
+  justEvaluated: false,
+};
+
+const symbols = {
+  '+': '+',
+  '-': '−',
+  '*': '×',
+  '/': '÷',
+};
+
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : NaN;
 }
 
-function appendNumber(num){
-  if(resetNext){ current = ''; resetNext = false; }
-  if(num === '.' && current.includes('.')) return;
-  if(current === '0' && num !== '.') current = num;
-  else current = (current || '') + num;
+function formatNumber(value) {
+  if (value === 'Error') return value;
+  const str = String(value);
+  if (str === '' || str === '-') return str || '0';
+
+  const num = toNumber(str);
+  if (Number.isNaN(num)) return 'Error';
+
+  return num.toLocaleString(undefined, { maximumFractionDigits: 10 });
 }
 
-function chooseOperator(op){
-  if(current === '' && previous === '') return;
-  if(previous !== '' && current !== '') compute();
-  operator = op;
-  if(current !== ''){ previous = current; current = ''; }
+function setError() {
+  state.current = 'Error';
+  state.previous = null;
+  state.operator = null;
+  state.shouldResetCurrent = true;
+  state.justEvaluated = true;
 }
 
-function compute(){
-  if(!operator || previous === '' ) return;
-  const a = parseFloat(previous);
-  const b = parseFloat(current || previous);
-  let result = 0;
-  switch(operator){
-    case '+': result = a + b; break;
-    case '-': result = a - b; break;
-    case '*': result = a * b; break;
-    case '/': result = b === 0 ? 'Error' : a / b; break;
-    case '%': result = a % b; break;
+function compute() {
+  if (!state.operator || state.previous === null) return;
+
+  const a = toNumber(state.previous);
+  const b = toNumber(state.current);
+
+  if (Number.isNaN(a) || Number.isNaN(b)) {
+    setError();
+    return;
   }
-  result = (typeof result === 'number' && !Number.isInteger(result)) 
-    ? parseFloat(result.toFixed(8)) : result;
 
-  current = String(result);
-  previous = '';
-  operator = null;
-  resetNext = true;
+  let result;
+  switch (state.operator) {
+    case '+':
+      result = a + b;
+      break;
+    case '-':
+      result = a - b;
+      break;
+    case '*':
+      result = a * b;
+      break;
+    case '/':
+      if (b === 0) {
+        setError();
+        return;
+      }
+      result = a / b;
+      break;
+    default:
+      return;
+  }
+
+  const rounded = Number(result.toFixed(10));
+  state.current = String(rounded);
+  state.previous = null;
+  state.operator = null;
+  state.shouldResetCurrent = true;
+  state.justEvaluated = true;
 }
 
-function clearAll(){ current = ''; previous = ''; operator = null; }
-function deleteLast(){ if(current) current = current.slice(0,-1); }
+function updateDisplay() {
+  display.textContent = formatNumber(state.current);
 
-document.querySelectorAll('.btn').forEach(btn => {
+  if (state.operator && state.previous !== null) {
+    expressionEl.textContent = `${formatNumber(state.previous)} ${symbols[state.operator]}`;
+  } else {
+    expressionEl.textContent = '\u00A0';
+  }
+}
+
+function clearAll() {
+  state.current = '0';
+  state.previous = null;
+  state.operator = null;
+  state.shouldResetCurrent = false;
+  state.justEvaluated = false;
+}
+
+function clearEntry() {
+  state.current = '0';
+}
+
+function appendNumber(char) {
+  if (state.current === 'Error') clearAll();
+
+  if (state.shouldResetCurrent) {
+    state.current = '0';
+    state.shouldResetCurrent = false;
+  }
+
+  if (char === '.') {
+    if (state.current.includes('.')) return;
+    state.current += '.';
+    return;
+  }
+
+  state.current = state.current === '0' ? char : state.current + char;
+  state.justEvaluated = false;
+}
+
+function chooseOperator(op) {
+  if (state.current === 'Error') return;
+
+  if (state.operator && !state.shouldResetCurrent) {
+    compute();
+  }
+
+  state.previous = state.current;
+  state.operator = op;
+  state.shouldResetCurrent = true;
+  state.justEvaluated = false;
+}
+
+function toggleSign() {
+  if (state.current === 'Error' || state.current === '0') return;
+  state.current = state.current.startsWith('-') ? state.current.slice(1) : `-${state.current}`;
+}
+
+function applyPercent() {
+  if (state.current === 'Error') return;
+
+  const value = toNumber(state.current);
+  if (Number.isNaN(value)) {
+    setError();
+    return;
+  }
+
+  if (state.previous !== null && state.operator) {
+    const base = toNumber(state.previous);
+    if (Number.isNaN(base)) {
+      setError();
+      return;
+    }
+
+    if (state.operator === '+' || state.operator === '-') {
+      state.current = String((base * value) / 100);
+    } else {
+      state.current = String(value / 100);
+    }
+  } else {
+    state.current = String(value / 100);
+  }
+}
+
+function deleteLast() {
+  if (state.current === 'Error') {
+    clearAll();
+    return;
+  }
+
+  if (state.shouldResetCurrent) return;
+
+  if (state.current.length <= 1 || (state.current.length === 2 && state.current.startsWith('-'))) {
+    state.current = '0';
+    return;
+  }
+
+  state.current = state.current.slice(0, -1);
+}
+
+function handleAction(action) {
+  if (['+', '-', '*', '/'].includes(action)) {
+    chooseOperator(action);
+    return;
+  }
+
+  switch (action) {
+    case '=':
+      compute();
+      break;
+    case 'clear-all':
+      clearAll();
+      break;
+    case 'clear-entry':
+      clearEntry();
+      break;
+    case 'delete':
+      deleteLast();
+      break;
+    case 'toggle-sign':
+      toggleSign();
+      break;
+    case 'percent':
+      applyPercent();
+      break;
+  }
+}
+
+document.querySelectorAll('.btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const num = btn.dataset.number;
     const action = btn.dataset.action;
 
-    if(num !== undefined) { appendNumber(num); updateDisplay(); return; }
-    if(action){
-      if(['+','-','*','/'].includes(action)) { chooseOperator(action); updateDisplay(); return; }
-      if(action === '='){ if(operator) compute(); updateDisplay(); return; }
-      if(action === 'clear'){ clearAll(); updateDisplay(); return; }
-      if(action === 'delete'){ deleteLast(); updateDisplay(); return; }
-      if(action === 'percent'){ chooseOperator('%'); compute(); updateDisplay(); return; }
-    }
+    if (num !== undefined) appendNumber(num);
+    if (action) handleAction(action);
+
+    updateDisplay();
   });
 });
 
-window.addEventListener('keydown', (e) => {
-  if((e.key >= '0' && e.key <= '9') || e.key === '.') { appendNumber(e.key); updateDisplay(); }
-  if(['+','-','*','/'].includes(e.key)) { chooseOperator(e.key); updateDisplay(); }
-  if(e.key === 'Enter' || e.key === '=') { if(operator) compute(); updateDisplay(); }
-  if(e.key === 'Backspace') { deleteLast(); updateDisplay(); }
-  if(e.key.toLowerCase() === 'c') { clearAll(); updateDisplay(); }
+window.addEventListener('keydown', (event) => {
+  const { key } = event;
+
+  if ((key >= '0' && key <= '9') || key === '.') {
+    appendNumber(key);
+  } else if (['+', '-', '*', '/'].includes(key)) {
+    handleAction(key);
+  } else if (key === 'Enter' || key === '=') {
+    event.preventDefault();
+    handleAction('=');
+  } else if (key === 'Backspace') {
+    handleAction('delete');
+  } else if (key === 'Escape' || key.toLowerCase() === 'c') {
+    handleAction('clear-all');
+  } else if (key === '%') {
+    handleAction('percent');
+  }
+
+  updateDisplay();
 });
 
 updateDisplay();
