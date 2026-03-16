@@ -150,7 +150,16 @@ function applyPercent() {
 
   if (state.previous !== null && state.operator) {
     const base = toNumber(state.previous);
-    state.current = String((base * value) / 100);
+    if (Number.isNaN(base)) {
+      setError();
+      return;
+    }
+
+    if (state.operator === '+' || state.operator === '-') {
+      state.current = String((base * value) / 100);
+    } else {
+      state.current = String(value / 100);
+    }
   } else {
     state.current = String(value / 100);
   }
