@@ -3,32 +3,54 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Simple Calculator</title>
+  <title>Professional Calculator</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="calculator">
-    <div class="display" id="display">0</div>
+  <main class="calculator" aria-label="Professional calculator">
+    <header class="brand">
+      <h1>Calculator Pro</h1>
+      <p>Standard + scientific quick actions</p>
+    </header>
+
+    <section class="display-wrap" aria-live="polite">
+      <div class="expression" id="expression">&nbsp;</div>
+      <div class="display" id="display">0</div>
+    </section>
+
+    <section class="history-wrap">
+      <div class="history-header">
+        <h2>Recent calculations</h2>
+        <button class="history-clear" id="clearHistory">Clear</button>
+      </div>
+      <ul id="history" class="history" aria-label="Calculation history"></ul>
+    </section>
+
     <div class="buttons">
-      <button class="btn" data-action="clear">C</button>
-      <button class="btn" data-action="delete">DEL</button>
-      <button class="btn" data-action="percent">%</button>
+      <button class="btn util" data-action="clear">AC</button>
+      <button class="btn util" data-action="delete">DEL</button>
+      <button class="btn util" data-action="negate">±</button>
       <button class="btn operator" data-action="/">÷</button>
+
+      <button class="btn util" data-action="square">x²</button>
+      <button class="btn util" data-action="sqrt">√x</button>
+      <button class="btn util" data-action="reciprocal">1/x</button>
+      <button class="btn operator" data-action="*">×</button>
 
       <button class="btn" data-number="7">7</button>
       <button class="btn" data-number="8">8</button>
       <button class="btn" data-number="9">9</button>
-      <button class="btn operator" data-action="*">×</button>
+      <button class="btn operator" data-action="-">−</button>
 
       <button class="btn" data-number="4">4</button>
       <button class="btn" data-number="5">5</button>
       <button class="btn" data-number="6">6</button>
-      <button class="btn operator" data-action="-">−</button>
+      <button class="btn operator" data-action="+">+</button>
 
       <button class="btn" data-number="1">1</button>
       <button class="btn" data-number="2">2</button>
       <button class="btn" data-number="3">3</button>
-      <button class="btn operator" data-action="+">+</button>
+      <button class="btn util" data-action="percent">%</button>
 
       <button class="btn zero" data-number="0">0</button>
       <button class="btn" data-number=".">.</button>
