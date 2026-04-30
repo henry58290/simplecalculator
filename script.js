@@ -16,7 +16,7 @@ const symbols = {
   '/': '÷',
 };
 
-function toNumber(value) {
+function toNumber(value) 
   const n = Number(value);
   return Number.isFinite(n) ? n : NaN;
 }
